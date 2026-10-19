@@ -1,6 +1,6 @@
 {
   "name": "pi-durable-couchdb",
-  "version": "0.1.0-alpha.0",
+  "version": "0.0.1",
   "description": "Single-owner CouchDB journal storage for Pi Durable",
   "type": "module",
   "license": "MIT",

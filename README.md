@@ -21,7 +21,7 @@ npm ci
 npm run check
 npm pack
 # In the host application, install the generated tarball:
-npm install /path/to/pi-durable-couchdb-0.1.0-alpha.0.tgz
+npm install /path/to/pi-durable-couchdb-0.0.1.tgz
 npm install @earendil-works/pi-durable@1.3.0 @earendil-works/chord@1.3.0 @earendil-works/pi-ai@1.3.0
 ```
 
