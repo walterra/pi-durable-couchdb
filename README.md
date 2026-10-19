@@ -111,6 +111,7 @@ ID allocations are persisted by updating the head counter **before returning an 
 npm run check              # types, all tests (Docker required), build
 npm run test:unit          # fake transport + replay tests; no Docker required
 npm run test:integration   # automatic CouchDB Testcontainer lifecycle
+npm run test:package       # pack, isolated install, strict types, runtime imports
 ```
 
 Integration tests use `@testcontainers/couchdb`, following Eddo's disposable-container approach. Docker must be running; no manual database setup, fixed port, or environment variables are needed. Vitest global setup starts one `couchdb:3.5.0` container on a dynamically assigned port with a random password, then shares connection details through typed `provide`/`inject` (no credentials file). The container's HTTP readiness check completes before tests run, and global teardown stops it after the integration project finishes, including failing test runs. Testcontainers' resource reaper provides additional cleanup for interrupted runs.
@@ -122,6 +123,12 @@ Tests include:
 - The same 24 cases with recovery after **every commit**.
 - All 24 cases against real CouchDB.
 - Reopening, persistent unused IDs, simultaneous allocations, publication conflicts, validation-before-write, missing published data, journal-write failure, and response loss before/after publication.
+
+### Published-package smoke test
+
+`npm run test:package` invokes `npm pack` (including `prepack`), installs the resulting tarball and exact tested peers in a temporary consumer outside the repository, checks required packaged files, compiles a Harness integration example with `skipLibCheck: false`, and imports the compiled package. It requires npm registry access but no Docker, CouchDB, or model credentials. Temporary files are removed on success or failure. CI runs it separately from storage tests.
+
+The fixture explicitly installs `@modelcontextprotocol/sdk@^1.25.2` because upstream `@google/genai` declarations reference this optional peer even when Gemini is unused. Strict TypeScript consumers encountering that missing-module error need the same workaround (`npm install --save-dev @modelcontextprotocol/sdk@^1.25.2`). It is not a CouchDB adapter runtime dependency. This is also documented by the PostgreSQL adapter; the smoke test does not claim the upstream declarations compile without that peer.
 
 ## References
 
