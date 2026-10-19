@@ -1,0 +1,22 @@
+name: check
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: docker compose up -d --wait
+      - run: npm run check
+        env:
+          COUCHDB_TEST_URL: http://127.0.0.1:15984
+      - run: npm pack --dry-run
+      - if: always()
+        run: docker compose down

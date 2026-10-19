@@ -1,0 +1,13 @@
+services:
+  couchdb:
+    image: couchdb:3.5.0
+    ports:
+      - "127.0.0.1:15984:5984"
+    environment:
+      COUCHDB_USER: durable
+      COUCHDB_PASSWORD: local-test-only
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:5984/_up"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
