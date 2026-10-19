@@ -108,14 +108,14 @@ ID allocations are persisted by updating the head counter **before returning an 
 ## Tests
 
 ```sh
-npm run check                         # types, fake transport tests, build
-
-docker compose up -d --wait
-COUCHDB_TEST_URL=http://127.0.0.1:15984 npm run check
-docker compose down
+npm run check              # types, all tests (Docker required), build
+npm run test:unit          # fake transport + replay tests; no Docker required
+npm run test:integration   # automatic CouchDB Testcontainer lifecycle
 ```
 
-Compose binds CouchDB to loopback only, with disposable local-test credentials. Tests create and delete only uniquely named `pi_durable_test_*` databases. Never point integration tests at production. Set `COUCHDB_TEST_AUTH=user:password` for another test server. Without `COUCHDB_TEST_URL`, integration tests are explicitly skipped.
+Integration tests use `@testcontainers/couchdb`, following Eddo's disposable-container approach. Docker must be running; no manual database setup, fixed port, or environment variables are needed. Vitest global setup starts one `couchdb:3.5.0` container on a dynamically assigned port with a random password, then shares connection details through typed `provide`/`inject` (no credentials file). The container's HTTP readiness check completes before tests run, and global teardown stops it after the integration project finishes, including failing test runs. Testcontainers' resource reaper provides additional cleanup for interrupted runs.
+
+Each test creates and deletes only its own uniquely named `pi_durable_test_*` database inside that disposable container. Existing CouchDB instances are never selected through environment variables. The default test command runs both projects and fails if Docker is unavailable rather than silently skipping integration coverage. `test:unit` selects only the Docker-free project. CI uses the same automatic lifecycle, without Compose services.
 
 Tests include:
 - All 24 upstream storage conformance cases against a deterministic fake transport.

@@ -1,14 +1,14 @@
 import { randomUUID } from 'node:crypto';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, inject } from 'vitest';
 import { BACKGROUND_CONTEXT as context } from '@earendil-works/chord/context';
 import type { ConversationId } from '@earendil-works/pi-durable';
 import { registerStorageConformance } from '@earendil-works/pi-durable/testing';
 import { openCouchDbStorage, couchDatabase, CouchDbStorage } from '../src/index.js';
 
-const server = process.env.COUCHDB_TEST_URL;
-const headers = { Authorization: `Basic ${Buffer.from(process.env.COUCHDB_TEST_AUTH ?? 'durable:local-test-only').toString('base64')}` };
+const { url: server, username, password } = inject('couchdb');
+const headers = { Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}` };
 async function fixture(use: (url: string) => Promise<void>) {
-  const url = `${server!.replace(/\/$/, '')}/pi_durable_test_${randomUUID().replaceAll('-', '')}`;
+  const url = `${server}/pi_durable_test_${randomUUID().replaceAll('-', '')}`;
   const created = await fetch(url, { method: 'PUT', headers });
   if (!created.ok) throw new Error(`Test database creation failed: ${created.status}`);
   try { await use(url); }
@@ -17,14 +17,14 @@ async function fixture(use: (url: string) => Promise<void>) {
     if (!deleted.ok) throw new Error(`Test database cleanup failed: ${deleted.status}`);
   }
 }
-const runner = { describe: server ? describe : describe.skip, it, expect };
+const runner = { describe, it, expect };
 registerStorageConformance(runner, 'real CouchDB conformance', async (use) => {
   await fixture(async (url) => {
     const storage = await openCouchDbStorage({ url, headers });
     try { await use(storage); } finally { await storage.close(context); }
   });
 });
-(server ? describe : describe.skip)('real CouchDB recovery', () => {
+describe('real CouchDB recovery', () => {
   it.each([false, true])('reconciles a head response failure (published=%s)', async (published) => {
     await fixture(async (url) => {
       const database = couchDatabase({ url, headers });
