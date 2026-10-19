@@ -4,6 +4,22 @@
   "description": "Single-owner CouchDB journal storage for Pi Durable",
   "type": "module",
   "license": "MIT",
+  "author": "Walter M. Rafelsberger",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/walterra/pi-durable-couchdb.git"
+  },
+  "homepage": "https://github.com/walterra/pi-durable-couchdb#readme",
+  "bugs": {
+    "url": "https://github.com/walterra/pi-durable-couchdb/issues"
+  },
+  "keywords": ["pi-durable", "couchdb", "agent", "durable", "storage"],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "engines": {
     "node": ">=22.19.0"
   },
