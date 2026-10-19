@@ -1,0 +1,69 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Disabled until the manual 0.0.1 bootstrap and npm/GitHub setup are complete.
+# Never cancel a job that may already have published to npm.
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/main' && vars.RELEASE_AUTOMATION == 'true'
+    uses: ./.github/workflows/check.yml
+
+  release:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: npm-publish
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Use npm with trusted publishing support
+        run: npm install --global npm@11.19.1
+
+      - run: npm ci --ignore-scripts
+
+      - name: Verify package identity and manual bootstrap
+        run: |
+          node --input-type=module -e "import p from './package.json' with { type: 'json' }; if (p.name !== 'pi-durable-couchdb' || p.private || !/^\d+\.\d+\.\d+$/.test(p.version)) throw new Error('Unexpected release package identity/version');"
+          test "$(npm view pi-durable-couchdb@0.0.1 version --registry=https://registry.npmjs.org)" = "0.0.1"
+
+      - name: Create release PR or publish
+        uses: changesets/action@v1
+        with:
+          title: 'chore: release pi-durable-couchdb'
+          commit: 'chore: version pi-durable-couchdb'
+          version: npm run version-packages
+          publish: npm run release
+          createGithubReleases: true
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          # No NPM_TOKEN/NODE_AUTH_TOKEN: npm authenticates via GitHub OIDC.
+          NPM_CONFIG_REGISTRY: https://registry.npmjs.org

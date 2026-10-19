@@ -6,7 +6,7 @@ Initial implementation inspired by the PostgreSQL backend's standalone package l
 
 ## Status and compatibility
 
-- Alpha; not yet published to npm. Package name is provisional.
+- Experimental; `0.0.1` is prepared for manual initial publication. Check npm for current availability.
 - Pi Durable and Chord **1.3.0**, pinned because the storage API is experimental.
 - Node.js **22.19+**; development verified on Node 24.
 - CouchDB **3.5.0**, verified with a single-node Docker instance.
@@ -14,7 +14,17 @@ Initial implementation inspired by the PostgreSQL backend's standalone package l
 - One externally coordinated Harness owner per database. **No ownership election or distributed lock is implemented.**
 - Cluster partitions, active-active replication, failover between independently writable replicas, and power-loss durability have not been validated. Do not treat `_rev` as a global distributed lock.
 
-## Install locally
+## Install
+
+Once the initial release is published:
+
+```sh
+npm install pi-durable-couchdb@0.0.1 @earendil-works/pi-durable@1.3.0 @earendil-works/chord@1.3.0 @earendil-works/pi-ai@1.3.0
+```
+
+Before publication, or to test a local build:
+
+### Install locally
 
 ```sh
 npm ci
@@ -129,6 +139,12 @@ Tests include:
 `npm run test:package` invokes `npm pack` (including `prepack`), installs the resulting tarball and exact tested peers in a temporary consumer outside the repository, checks required packaged files, compiles a Harness integration example with `skipLibCheck: false`, and imports the compiled package. It requires npm registry access but no Docker, CouchDB, or model credentials. Temporary files are removed on success or failure. CI runs it separately from storage tests.
 
 The fixture explicitly installs `@modelcontextprotocol/sdk@^1.25.2` because upstream `@google/genai` declarations reference this optional peer even when Gemini is unused. Strict TypeScript consumers encountering that missing-module error need the same workaround (`npm install --save-dev @modelcontextprotocol/sdk@^1.25.2`). It is not a CouchDB adapter runtime dependency. This is also documented by the PostgreSQL adapter; the smoke test does not claim the upstream declarations compile without that peer.
+
+## Releases and contributions
+
+User-visible changes include a Changeset: run `npm run changeset` and commit the generated file with the change. After the manual `0.0.1` bootstrap, enabled automation prepares a reviewed version/changelog PR and publishes after its merge and successful verification.
+
+See [CHANGELOG.md](CHANGELOG.md), [the Changesets guide](.changeset/README.md), and [the release checklist](docs/releasing.md). Automation is disabled until the GitHub/npm setup is complete; no release has been published by this setup.
 
 ## References
 
