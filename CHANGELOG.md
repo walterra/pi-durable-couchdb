@@ -2,6 +2,12 @@
 
 Subsequent releases are generated from `.changeset/*.md` using Changesets. The initial release entry is maintained manually until publication.
 
+## 0.0.2
+
+### Patch Changes
+
+- ded3a4c: Update Pi Durable and Chord peer pins to 1.5.0 and adopt the batched storage commit API with ordered durability receipts and partial refusal results.
+
 ## 0.0.1
 
 Initial experimental release, prepared for manual publication. This entry does not indicate that the package has already been published.
