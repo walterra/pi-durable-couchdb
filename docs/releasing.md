@@ -99,6 +99,12 @@ The next push to `main` runs it; `gh workflow run release.yml --ref main` can al
 4. The release workflow verifies that merge commit, then `changeset publish` publishes versions absent from npm. The action pushes tags and creates GitHub releases. For a single package, expect `vX.Y.Z`; confirm the actual output.
 5. Verify registry version/integrity, Git tag, and GitHub release. Never assume a green PR alone means publication happened.
 
+### Changesets action compatibility
+
+Keep `changesets/action` v2 paired with `@changesets/cli` v3. Action v2 reads the CLI's structured publication events through `CHANGESETS_OUTPUT`; `npm run release` preserves that environment variable. Action v1 parses CLI v2 log messages and can report success after npm publication without pushing tags or creating GitHub releases when used with CLI v3.
+
+The v2 action uses `github-token`, `pr-title`, `commit-message`, `version-script`, `publish-script`, `create-github-releases`, and `push-git-tags` inputs. Pass the GitHub App token through `github-token`, not only the `GITHUB_TOKEN` environment variable, so generated release PRs trigger CI. When upgrading either component, review the action's input contract and confirm npm publication, remote tag, and GitHub release separately on the next release.
+
 `npm run version-packages` runs Changesets then synchronizes `package-lock.json` with scripts disabled. The version command is for automation/release preparation, not ordinary feature development. `npm run release` is a real publish command; do not use it as a dry run.
 
 ## Recovery
