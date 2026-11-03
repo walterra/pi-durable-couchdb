@@ -41,7 +41,7 @@ describe('real CouchDB recovery', () => {
       });
       const id = await storage.mintId<ConversationId>();
       fail = true;
-      await expect(storage.commit([{ type: 'conversation', value: { id } }], context)).rejects.toThrow('close and reopen');
+      await expect(storage.commit([[{ type: 'conversation', value: { id } }]], () => {}, context)).rejects.toThrow('close and reopen');
       await expect(storage.conversation(id, context)).rejects.toThrow('close and reopen');
       await storage.close(context);
       const recovered = await openCouchDbStorage({ url, headers });
@@ -53,7 +53,7 @@ describe('real CouchDB recovery', () => {
     await fixture(async (url) => {
       const storage = await openCouchDbStorage({ url, headers });
       const id = await storage.mintId<ConversationId>();
-      await storage.commit([{ type: 'conversation', value: { id } }], context);
+      await storage.commit([[{ type: 'conversation', value: { id } }]], () => {}, context);
       const unused = await storage.mintId();
       await storage.close(context);
       const recovered = await openCouchDbStorage({ url, headers });

@@ -60,7 +60,7 @@ describe('publication recovery', () => {
     const db = new FakeDatabase();
     const storage = await CouchDbStorage.open(db);
     const id = await storage.mintId<ConversationId>();
-    await storage.commit([conversation(id)], context);
+    await storage.commit([[conversation(id)]], () => {}, context);
     await storage.close(context);
     const reopened = await CouchDbStorage.open(db);
     expect((await reopened.conversation(id, context))?.id).toBe(id);
@@ -70,7 +70,7 @@ describe('publication recovery', () => {
     const storage = await CouchDbStorage.open(db);
     const id = await storage.mintId<ConversationId>();
     db.fail = failure;
-    await expect(storage.commit([conversation(id)], context)).rejects.toThrow('close and reopen');
+    await expect(storage.commit([[conversation(id)]], () => {}, context)).rejects.toThrow('close and reopen');
     await expect(storage.conversation(id, context)).rejects.toThrow('close and reopen');
     await storage.close(context);
     db.fail = undefined;
@@ -82,7 +82,7 @@ describe('publication recovery', () => {
     const storage = await CouchDbStorage.open(db);
     const id = await storage.mintId<ConversationId>();
     db.fail = 'commit';
-    await expect(storage.commit([conversation(id)], context)).rejects.toThrow('close and reopen');
+    await expect(storage.commit([[conversation(id)]], () => {}, context)).rejects.toThrow('close and reopen');
     db.fail = undefined;
     const reopened = await CouchDbStorage.open(db);
     expect(await reopened.conversation(id, context)).toBeUndefined();
@@ -102,7 +102,7 @@ describe('publication recovery', () => {
   it('fails recovery if published data is missing', async () => {
     const db = new FakeDatabase();
     const storage = await CouchDbStorage.open(db);
-    await storage.commit([], context);
+    await storage.commit([[]], () => {}, context);
     const head = db.docs.get('pi:head')!;
     db.docs.delete(head.commitId as string);
     await expect(CouchDbStorage.open(db)).rejects.toThrow('Missing or corrupt');
@@ -111,7 +111,8 @@ describe('publication recovery', () => {
     const db = new FakeDatabase();
     const storage = await CouchDbStorage.open(db);
     const before = db.docs.size;
-    await expect(storage.commit([{ type: 'invalid' } as unknown as StorageWrite], context)).rejects.toThrow();
+    await expect(storage.commit([[{ type: 'invalid' } as unknown as StorageWrite]], () => {}, context))
+      .resolves.toMatchObject({ stored: 0, refused: expect.any(Error) });
     expect(db.docs.size).toBe(before);
   });
 });

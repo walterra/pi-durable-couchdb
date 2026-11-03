@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { Context } from '@earendil-works/chord';
-import type { Id, Seq, StorageWrite } from '@earendil-works/pi-durable';
+import type { CommitResult, Id, Seq, StorageWrite } from '@earendil-works/pi-durable';
 import { MemoryStorage } from '@earendil-works/pi-durable/storage/memory';
 import { couchDatabase, CouchHttpError, type CouchDatabase, type CouchDocument, type HttpOptions } from './client.js';
 export { couchDatabase, CouchHttpError, type CouchDatabase, type CouchDocument, type HttpOptions } from './client.js';
@@ -129,9 +129,32 @@ export class CouchDbStorage extends MemoryStorage {
     }
   }
 
-  override async commit(writes: readonly StorageWrite[], _context: Context): Promise<Seq> {
-    validateWriteTypes(writes);
-    const prepared = super.prepareCommit(writes);
+  override async commit(
+    batches: readonly (readonly StorageWrite[])[],
+    receive: (index: number, seq: Seq) => void,
+    _context: Context,
+  ): Promise<CommitResult> {
+    const seqs: Seq[] = [];
+    let refusal: { error: unknown } | undefined;
+    try {
+      for (const writes of batches) {
+        let prepared: ReturnType<MemoryStorage['prepareCommit']>;
+        try {
+          validateWriteTypes(writes);
+          prepared = super.prepareCommit(writes);
+        } catch (error) {
+          refusal = { error };
+          break;
+        }
+        seqs.push(await this.persistCommit(prepared));
+      }
+    } finally {
+      for (const [index, seq] of seqs.entries()) receive(index, seq);
+    }
+    return refusal ? { stored: seqs.length, refused: refusal.error } : { stored: seqs.length };
+  }
+
+  private async persistCommit(prepared: ReturnType<MemoryStorage['prepareCommit']>): Promise<Seq> {
     const record: Journal = {
       _id: `pi:commit:${randomUUID()}`, format: 1,
       parent: this.head.commitId, sequence: prepared.seq,
