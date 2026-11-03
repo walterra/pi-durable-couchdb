@@ -7,7 +7,7 @@ Initial implementation inspired by the PostgreSQL backend's standalone package l
 ## Status and compatibility
 
 - Experimental; `0.0.1` is prepared for manual initial publication. Check npm for current availability.
-- Pi Durable and Chord **1.3.0**, pinned because the storage API is experimental.
+- Pi Durable and Chord **1.5.0**, pinned because the storage API is experimental.
 - Node.js **22.19+**; development verified on Node 24.
 - CouchDB **3.5.0**, verified with a single-node Docker instance.
 - Full committed history is loaded into memory. No snapshots, garbage collection, or bounded-memory reads yet.
@@ -19,7 +19,7 @@ Initial implementation inspired by the PostgreSQL backend's standalone package l
 Once the initial release is published:
 
 ```sh
-npm install pi-durable-couchdb@0.0.1 @earendil-works/pi-durable@1.3.0 @earendil-works/chord@1.3.0 @earendil-works/pi-ai@1.3.0
+npm install pi-durable-couchdb@0.0.1 @earendil-works/pi-durable@1.5.0 @earendil-works/chord@1.5.0 @earendil-works/pi-ai@1.5.0
 ```
 
 Before publication, or to test a local build:
@@ -32,7 +32,7 @@ npm run check
 npm pack
 # In the host application, install the generated tarball:
 npm install /path/to/pi-durable-couchdb-0.0.1.tgz
-npm install @earendil-works/pi-durable@1.3.0 @earendil-works/chord@1.3.0 @earendil-works/pi-ai@1.3.0
+npm install @earendil-works/pi-durable@1.5.0 @earendil-works/chord@1.5.0 @earendil-works/pi-ai@1.5.0
 ```
 
 The package builds ESM JavaScript, declarations, and source maps. `npm pack` and `npm publish` build through `prepack`; nothing has been published automatically.
