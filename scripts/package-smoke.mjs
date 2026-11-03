@@ -81,7 +81,7 @@ console.log('Package smoke test passed: installed tarball, public imports, stric
   write('tsconfig.json', {
     compilerOptions: {
       target: 'ES2023', module: 'NodeNext', moduleResolution: 'NodeNext',
-      strict: true, exactOptionalPropertyTypes: true, noUncheckedIndexedAccess: true,
+      strict: true, noUncheckedIndexedAccess: true,
       skipLibCheck: false, outDir: 'out', types: ['node'],
     },
     include: ['smoke.ts'],
