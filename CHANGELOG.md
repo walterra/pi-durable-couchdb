@@ -2,6 +2,12 @@
 
 Subsequent releases are generated from `.changeset/*.md` using Changesets. The initial release entry is maintained manually until publication.
 
+## 0.0.5
+
+### Patch Changes
+
+- 98acc5c: Update Pi Durable and Chord peer pins to 1.6.0. Consumers must install the matching 1.6.0 peers. Pi Durable 1.6.0 updates persisted Harness task versions; do not reopen databases written by this Harness version with an older Harness.
+
 ## 0.0.4
 
 ### Patch Changes
