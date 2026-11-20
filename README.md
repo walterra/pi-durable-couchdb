@@ -6,8 +6,8 @@ Initial implementation inspired by the PostgreSQL backend's standalone package l
 
 ## Status and compatibility
 
-- Experimental; `0.0.1` is prepared for manual initial publication. Check npm for current availability.
-- Pi Durable and Chord **1.5.1**, pinned because the storage API is experimental.
+- Experimental; published on [npm](https://www.npmjs.com/package/pi-durable-couchdb). Release history is recorded in [CHANGELOG.md](CHANGELOG.md).
+- Pi Durable and Chord **1.5.2**, pinned because the storage API is experimental.
 - Node.js **22.19+**; development verified on Node 24.
 - CouchDB **3.5.0**, verified with a single-node Docker instance.
 - Full committed history is loaded into memory. No snapshots, garbage collection, or bounded-memory reads yet.
@@ -16,13 +16,13 @@ Initial implementation inspired by the PostgreSQL backend's standalone package l
 
 ## Install
 
-Once the initial release is published:
+Install with the matching Pi peers:
 
 ```sh
-npm install pi-durable-couchdb@0.0.1 @earendil-works/pi-durable@1.5.1 @earendil-works/chord@1.5.1 @earendil-works/pi-ai@1.5.1
+npm install pi-durable-couchdb @earendil-works/pi-durable@1.5.2 @earendil-works/chord@1.5.2 @earendil-works/pi-ai@1.5.2
 ```
 
-Before publication, or to test a local build:
+To test a local build:
 
 ### Install locally
 
@@ -31,11 +31,11 @@ npm ci
 npm run check
 npm pack
 # In the host application, install the generated tarball:
-npm install /path/to/pi-durable-couchdb-0.0.1.tgz
-npm install @earendil-works/pi-durable@1.5.1 @earendil-works/chord@1.5.1 @earendil-works/pi-ai@1.5.1
+npm install /path/to/pi-durable-couchdb-<version>.tgz
+npm install @earendil-works/pi-durable@1.5.2 @earendil-works/chord@1.5.2 @earendil-works/pi-ai@1.5.2
 ```
 
-The package builds ESM JavaScript, declarations, and source maps. `npm pack` and `npm publish` build through `prepack`; nothing has been published automatically.
+The package builds ESM JavaScript, declarations, and source maps. `npm pack` and `npm publish` build through `prepack`. Use the tarball filename printed by `npm pack`; its version comes from `package.json`.
 
 ## Use
 
@@ -78,10 +78,16 @@ Use TLS and application-specific credentials outside local development. Credenti
 
 CouchDB's `_bulk_docs` is not a transaction. This backend does not use it.
 
+`commit(batches, receive, context)` processes batches in order. Each batch has its own journal document, head publication, and sequence; the entire call is not one atomic transaction.
+
+For each batch:
+
 1. Validate and detach the batch using upstream `MemoryStorage.prepareCommit()`.
 2. Store the entire batch in a new immutable `pi:commit:<uuid>` document, including its parent ID and sequence.
 3. Update `pi:head` using its expected `_rev`.
-4. Only after successful publication apply the batch to in-memory state and resolve the commit.
+4. Only after successful publication apply the batch to in-memory state.
+
+After processing, call `receive(index, seq)` synchronously for each durable batch in order and resolve with `{ stored, refused? }`. Validation refusal stops processing without storing that batch or later ones; earlier batches remain durable. An I/O failure rejects the call, but receipts for earlier successfully stored batches still stand.
 
 The head update is the logical commit point. Readers use only the local committed view; reopening reads the head and walks exact commit IDs, validates ancestry, and replays the journal. No Mango/view index or search visibility is involved. All public storage operations are serialized within the instance.
 
@@ -91,7 +97,7 @@ Batches are stored as JSON-encoded strings (`writesJson`) inside the journal env
 
 | Failure | Behavior |
 | --- | --- |
-| Batch validation fails | No persistent write; instance remains usable |
+| Batch validation fails | Resolve with `refused`; no write for that batch or later ones; earlier batches remain durable; instance remains usable |
 | Journal write fails | Fail closed; reopen before further use |
 | Head publication fails or times out | Outcome uncertain; fail closed and reopen |
 | Journal exists but head was not published | Ignore unreachable journal document |
@@ -99,7 +105,7 @@ Batches are stored as JSON-encoded strings (`writesJson`) inside the journal env
 | Published journal data missing or invalid | Opening fails; never serve partial state |
 | Stale head revision | Fail closed, rather than rebasing unknown Harness state |
 
-After an I/O failure, even reads reject because the in-memory view may be stale. `close()` remains available. Stop the Harness and open a new storage/Harness pair; do not reuse cached handles. There is no automatic storage-write retry or transaction receipt API. Pi submission `requestId` is the input-deduplication boundary, not a guarantee about arbitrary external effects.
+After an I/O failure, even reads reject because the in-memory view may be stale. `close()` remains available. Stop the Harness and open a new storage/Harness pair; do not reuse cached handles. There is no automatic storage-write retry or separate transaction-outcome lookup API. Commit durability receipts identify successfully stored batches, not arbitrary external effects. Pi submission `requestId` is the input-deduplication boundary, not a guarantee about arbitrary external effects.
 
 ID allocations are persisted by updating the head counter **before returning an ID**, including allocations not subsequently used in a commit. Gaps are valid.
 
@@ -129,9 +135,9 @@ Integration tests use `@testcontainers/couchdb`, following Eddo's disposable-con
 Each test creates and deletes only its own uniquely named `pi_durable_test_*` database inside that disposable container. Existing CouchDB instances are never selected through environment variables. The default test command runs both projects and fails if Docker is unavailable rather than silently skipping integration coverage. `test:unit` selects only the Docker-free project. CI uses the same automatic lifecycle, without Compose services.
 
 Tests include:
-- All 24 upstream storage conformance cases against a deterministic fake transport.
-- The same 24 cases with recovery after **every commit**.
-- All 24 cases against real CouchDB.
+- The upstream storage conformance suite against a deterministic fake transport.
+- The same suite with recovery after **every commit call**.
+- The same suite against real CouchDB.
 - Reopening, persistent unused IDs, simultaneous allocations, publication conflicts, validation-before-write, missing published data, journal-write failure, and response loss before/after publication.
 
 ### Published-package smoke test
@@ -142,9 +148,9 @@ The fixture explicitly installs `@modelcontextprotocol/sdk@^1.25.2` because upst
 
 ## Releases and contributions
 
-User-visible changes include a Changeset: run `npm run changeset` and commit the generated file with the change. After the manual `0.0.1` bootstrap, enabled automation prepares a reviewed version/changelog PR and publishes after its merge and successful verification.
+User-visible changes include a Changeset: run `npm run changeset` and commit the generated file with the change. Release automation prepares a reviewed version/changelog PR and publishes after its merge and successful verification.
 
-See [CHANGELOG.md](CHANGELOG.md), [the Changesets guide](.changeset/README.md), and [the release checklist](docs/releasing.md). Automation is disabled until the GitHub/npm setup is complete; no release has been published by this setup.
+See [CHANGELOG.md](CHANGELOG.md), [the Changesets guide](.changeset/README.md), and [the release checklist](docs/releasing.md). Automation uses npm trusted publishing and creates Git tags and GitHub releases. The manual `0.0.1` bootstrap is complete; the release checklist also documents one-time setup and recovery.
 
 ## References
 
