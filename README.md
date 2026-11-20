@@ -7,7 +7,8 @@ Initial implementation inspired by the PostgreSQL backend's standalone package l
 ## Status and compatibility
 
 - Experimental; published on [npm](https://www.npmjs.com/package/pi-durable-couchdb). Release history is recorded in [CHANGELOG.md](CHANGELOG.md).
-- Pi Durable and Chord **1.5.2**, pinned because the storage API is experimental.
+- Pi Durable and Chord **1.6.0**, pinned because the storage API is experimental.
+- Pi Durable 1.6.0 updates persisted Harness task versions. Do not reopen a database written by this Harness version with an older Harness; the adapter's journal format is unchanged.
 - Node.js **22.19+**; development verified on Node 24.
 - CouchDB **3.5.0**, verified with a single-node Docker instance.
 - Full committed history is loaded into memory. No snapshots, garbage collection, or bounded-memory reads yet.
@@ -19,7 +20,7 @@ Initial implementation inspired by the PostgreSQL backend's standalone package l
 Install with the matching Pi peers:
 
 ```sh
-npm install pi-durable-couchdb @earendil-works/pi-durable@1.5.2 @earendil-works/chord@1.5.2 @earendil-works/pi-ai@1.5.2
+npm install pi-durable-couchdb @earendil-works/pi-durable@1.6.0 @earendil-works/chord@1.6.0 @earendil-works/pi-ai@1.6.0
 ```
 
 To test a local build:
@@ -32,7 +33,7 @@ npm run check
 npm pack
 # In the host application, install the generated tarball:
 npm install /path/to/pi-durable-couchdb-<version>.tgz
-npm install @earendil-works/pi-durable@1.5.2 @earendil-works/chord@1.5.2 @earendil-works/pi-ai@1.5.2
+npm install @earendil-works/pi-durable@1.6.0 @earendil-works/chord@1.6.0 @earendil-works/pi-ai@1.6.0
 ```
 
 The package builds ESM JavaScript, declarations, and source maps. `npm pack` and `npm publish` build through `prepack`. Use the tarball filename printed by `npm pack`; its version comes from `package.json`.
