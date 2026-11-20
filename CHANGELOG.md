@@ -2,6 +2,12 @@
 
 Subsequent releases are generated from `.changeset/*.md` using Changesets. The initial release entry is maintained manually until publication.
 
+## 0.0.4
+
+### Patch Changes
+
+- 614b6b3: Update Pi Durable and Chord peer pins to 1.5.2. Consumers must install the matching 1.5.2 peers.
+
 ## 0.0.3
 
 ### Patch Changes
