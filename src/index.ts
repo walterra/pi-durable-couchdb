@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { Context } from '@earendil-works/chord';
+import type { Context } from '@earendil-works/chord/context';
 import type { CommitResult, Id, Seq, StorageWrite } from '@earendil-works/pi-durable';
 import { MemoryStorage } from '@earendil-works/pi-durable/storage/memory';
 import { couchDatabase, CouchHttpError, type CouchDatabase, type CouchDocument, type HttpOptions } from './client.js';
